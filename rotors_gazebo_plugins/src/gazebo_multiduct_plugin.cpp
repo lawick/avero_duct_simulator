@@ -8,7 +8,8 @@ void GazeboMultiDuctPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf)
     std::cout << std::endl;
     model_ =_model; 
     world_ = model_->GetWorld(); 
-    //===================/local/home/lawick/catkin_ws/src/avero_duct_simulator/rotors_gazebo_plugins/src/gazebo_multiduct_plugin.cpp===========================//
+    
+    //==============================================//
     //========== READ IN PARAMS FROM SDF ===========//
     //==============================================//
 
