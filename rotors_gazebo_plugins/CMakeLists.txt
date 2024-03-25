@@ -437,6 +437,14 @@ if (NOT NO_ROS)
 endif()
 list(APPEND targets_to_install rotors_gazebo_multimotor_plugin)
 
+#==================================== MULTIDUCT PLUGIN ==+======================================//
+add_library(rotors_gazebo_multiduct_plugin SHARED src/gazebo_multiduct_plugin.cpp)
+target_link_libraries(rotors_gazebo_multiduct_plugin ${target_linking_LIBRARIES} )
+if (NOT NO_ROS)
+  add_dependencies(rotors_gazebo_multiduct_plugin ${catkin_EXPORTED_TARGETS})
+endif()
+list(APPEND targets_to_install rotors_gazebo_multiduct_plugin)
+
 #==================================== MULTIROTOR BASE PLUGIN ====================================//
 add_library(rotors_gazebo_multirotor_base_plugin SHARED src/gazebo_multirotor_base_plugin.cpp)
 target_link_libraries(rotors_gazebo_multirotor_base_plugin ${target_linking_LIBRARIES} )
