@@ -15,7 +15,9 @@ void GazeboMultiDuctPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf)
 
     if (_sdf->HasElement("robotNamespace")) {
         namespace_ = _sdf->GetElement("robotNamespace")->Get<std::string>();
+        std::cout << "Name Space: " << namespace_ << std::endl;
     } else {
+        std::cout << "No NameSpace!!!" << std::endl; 
         gzerr << "[multimotor_plugin] Please specify a robotNamespace.\n";
     }
 
@@ -41,7 +43,7 @@ void GazeboMultiDuctPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf)
         while (motor) {
         // Only load valid motors
         if (IsValidLink(motor) & IsValidJoint(motor)) {
-            motors_.push_back(std::make_unique<MotorModelRotor>(model_, motor)); // Erstelle einen Ptr auf ein neues MotorModelDuct !!! 
+            motors_.push_back(std::make_unique<MotorModelDuct>(model_, motor)); // Erstelle einen Ptr auf ein neues MotorModelDuct !!! 
     //Change to MotorModelduct
             gzdbg << "[gazebo_multimotor_plugin] Loaded duct!\n";
         } else {
@@ -67,7 +69,7 @@ void GazeboMultiDuctPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf)
         motor = motor->GetNextElement("servo");
         }
     }
-
+    std::cout << "Loaded the actuators"<<std::endl; 
     gzdbg << "[gazebo_multimotor_plugin] Loaded " << motors_.size() << " actuators.";
 
     // Listen to the update event. This event is broadcast every
@@ -77,6 +79,7 @@ void GazeboMultiDuctPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf)
 
 void GazeboMultiDuctPlugin::OnUpdate(const common::UpdateInfo&) {
   if (!pubs_and_subs_created_) {
+    std::cout << "CreateSubsAndPubs"<<std::endl; 
     CreatePubsAndSubs();
     pubs_and_subs_created_ = true;
   }
@@ -119,6 +122,8 @@ void GazeboMultiDuctPlugin::CreatePubsAndSubs() {
 
   gzdbg << "GazeboMultimotorPlugin creating Gazebo publisher on \""
         << namespace_ + "/" + motor_state_pub_topic_ << "\"." << std::endl;
+  std::cout << "GazeboMultimotorPlugin creating Gazebo publisher on \""
+        << namespace_ + "/" + motor_state_pub_topic_ << "\"." << std::endl;
   motor_state_pub_ = node_handle_->Advertise<gz_sensor_msgs::Actuators>(
       namespace_ + "/" + motor_state_pub_topic_, 1);
 
@@ -135,6 +140,10 @@ void GazeboMultiDuctPlugin::CreatePubsAndSubs() {
   //
   gzdbg << "Subscribing to Gazebo topic \""
         << "~/" + namespace_ + "/" + command_actuator_sub_topic_ << "\"." << std::endl;
+
+  std::cout << "Subscribing to Gazebo topic \""
+        << "~/" + namespace_ + "/" + command_actuator_sub_topic_ << "\"." << std::endl;
+
   cmd_motor_sub_ = node_handle_->Subscribe("~/" + namespace_ + "/" + command_actuator_sub_topic_,
                                            &GazeboMultiDuctPlugin::CommandMotorCallback, this);
 
@@ -146,6 +155,9 @@ void GazeboMultiDuctPlugin::CreatePubsAndSubs() {
                                                    command_actuator_sub_topic_);
   connect_ros_to_gazebo_topic_msg.set_msgtype(gz_std_msgs::ConnectRosToGazeboTopic::ACTUATORS);
   gz_connect_ros_to_gazebo_topic_pub->Publish(connect_ros_to_gazebo_topic_msg, true);
+
+std::cout << "CreateSubsAndPubs"<<std::endl; 
+
 }
 
 void GazeboMultiDuctPlugin::CommandMotorCallback(GzActuatorsMsgPtr& actuators_msg) {

@@ -8,6 +8,10 @@
 #include "rotors_gazebo_plugins/motor_model.hpp"
 
 namespace gazebo{
+  // Default values from KDE885 performance data chart
+// static constexpr double kDefaultMotorTorqueConst0 = 0.00218;
+// static constexpr double kDefaultMotorTorqueConst1 = 0.00318;
+// static constexpr double kDefaultMotorTorqueConst2 = 0.00047;
 
 class MotorModelDuct : public MotorModel{
     public: 
@@ -20,17 +24,18 @@ class MotorModelDuct : public MotorModel{
             min_rot_velocity_(kDefaultMinRotVelocity),
             thrust_constant_(kDefaultThrustConstant),
             moment_constant_(kDefaultMomentConstant),
-            motor_torque_constant0_(kDefaultMotorTorqueConst0),
-            motor_torque_constant1_(kDefaultMotorTorqueConst1),
-            motor_torque_constant2_(kDefaultMotorTorqueConst2),
+            // motor_torque_constant0_(kDefaultMotorTorqueConst0),
+            // motor_torque_constant1_(kDefaultMotorTorqueConst1),
+            // motor_torque_constant2_(kDefaultMotorTorqueConst2),
             rotor_drag_coefficient_(kDefaultRotorDragCoefficient),
             rolling_moment_coefficient_(kDefaultRollingMomentCoefficient),
             rotor_velocity_slowdown_sim_(kDefaultRotorVelocitySlowdownSim) {
         motor_ = _motor;
         joint_ = _model->GetJoint(motor_->GetElement("jointName")->Get<std::string>());
         link_ = _model->GetLink(motor_->GetElement("linkName")->Get<std::string>());
-        link_dynamixel_base_ = _model->GetLink(motor_->GetElement("linkBase")->Get<std::string>());
-        // link_dynamixel_top_ = _model->GetLink(motor_->GetElement("linkTop")->Get<std::string>());
+        link_dynamixel_base_name = motor_->GetElement("linkBase")->Get<std::string>();
+        joint_dynamixel_base_ = _model->GetJoint(motor_->GetElement("linkBase")->Get<std::string>());
+        joint_dynamixel_top_ = _model->GetJoint(motor_->GetElement("linkTop")->Get<std::string>());
         InitializeParams();
     }
 
@@ -60,11 +65,13 @@ class MotorModelDuct : public MotorModel{
     sdf::ElementPtr motor_;
     physics::JointPtr joint_;
     physics::LinkPtr link_;
-    physics::LinkPtr link_dynamixel_base_; 
+    physics::JointPtr joint_dynamixel_base_; 
+    physics::JointPtr joint_dynamixel_top_; 
+    std::string link_dynamixel_base_name; 
     physics::LinkPtr link_dynamixel_top_;
 
     void InitializeParams(){
-    std::cout << "InizializeParams not Implemented!";
+    //std::cout << "InizializeParams not Implemented!";
     
     if (motor_->HasElement("spinDirection")) {
       std::string turning_direction = motor_->GetElement("spinDirection")->Get<std::string>();
@@ -85,17 +92,19 @@ class MotorModelDuct : public MotorModel{
     getSdfParam<double>(motor_, "minRotVelocity", min_rot_velocity_, min_rot_velocity_);
     getSdfParam<double>(motor_, "thrustConstant", thrust_constant_, thrust_constant_);
     getSdfParam<double>(motor_, "momentConstant", moment_constant_, moment_constant_);
-    getSdfParam<double>(motor_, "motorTorqueConstant0", motor_torque_constant0_,
-                        motor_torque_constant0_);
-    getSdfParam<double>(motor_, "motorTorqueConstant1", motor_torque_constant1_,
-                        motor_torque_constant1_);
-    getSdfParam<double>(motor_, "motorTorqueConstant2", motor_torque_constant2_,
-                        motor_torque_constant2_);
+    getSdfParam<double>(motor_, "motorTorqueConstant0", motor_torque_constant0_,motor_torque_constant0_);
+    getSdfParam<double>(motor_, "motorTorqueConstant1", motor_torque_constant1_,motor_torque_constant1_);
+    getSdfParam<double>(motor_, "motorTorqueConstant2", motor_torque_constant2_,motor_torque_constant2_);
     getSdfParam<double>(motor_, "timeConstantUp", time_constant_up_, time_constant_up_);
     getSdfParam<double>(motor_, "timeConstantDown", time_constant_down_, time_constant_down_);
     getSdfParam<double>(motor_, "rotorVelocitySlowdownSim", rotor_velocity_slowdown_sim_, 10);
     
+    std::cout << "Inizialized Params as followed: " << std::endl;
+    std::cout << "momentConstant: " << moment_constant_ << std::endl;
+    std::cout << "linkBaseName: " << link_dynamixel_base_name << std::endl; 
+    std::cout << "linkBase: " << joint_dynamixel_base_ << std::endl; 
 
+    std::cout << "link_: " << link_ << std::endl; 
 
     // // Create the first order filter.
     // rotor_velocity_filter_.reset(
@@ -105,7 +114,12 @@ class MotorModelDuct : public MotorModel{
     void Publish() {} // Do we need ist?
 
     void UpdateForcesAndMoments() {
-        std::cout << "UpdateForcesAndTorques not implemented!";
+
+      double pos_base = joint_dynamixel_base_->Position(0); // Returns the Position in radians!
+      double pos_top = joint_dynamixel_top_->Position(0);
+      // std::cout << "Position Base is at: " << pos_base << std::endl;
+      // std::cout << "Position Top is at: " << pos_top << std::endl;
+       // std::cout << "UpdateForcesAndTorques not implemented!";
         // Do we set the velocity of the Motor to the PWM signal as mock speed 
         // And then here in the plugin convert this given PWM signal to a 
 
