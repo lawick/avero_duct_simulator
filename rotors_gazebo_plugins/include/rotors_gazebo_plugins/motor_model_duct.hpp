@@ -119,6 +119,7 @@ class MotorModelDuct : public MotorModel{
       double pos_base = joint_dynamixel_base_->Position(0); // Returns the Position in radians!
       double pos_top = joint_dynamixel_top_->Position(0);
 
+      // Wie modellieren wir die rotor speeds ramp up etc... 
 
       // Logic to determine the thrust force
       // Logic to determine the thrust direction
@@ -129,11 +130,6 @@ class MotorModelDuct : public MotorModel{
       // Set the Velocity of the Fan... 
       if(!std::isnan(ref_motor_rot_vel_)){joint_->SetVelocity(0, ref_motor_rot_vel_);}    
     }
-
-
-
-
-
 };
 
 
