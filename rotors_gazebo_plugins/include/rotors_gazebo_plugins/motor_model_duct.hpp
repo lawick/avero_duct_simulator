@@ -118,24 +118,16 @@ class MotorModelDuct : public MotorModel{
 
       double pos_base = joint_dynamixel_base_->Position(0); // Returns the Position in radians!
       double pos_top = joint_dynamixel_top_->Position(0);
-      // std::cout << "Position Base is at: " << pos_base << std::endl;
-      // std::cout << "Position Top is at: " << pos_top << std::endl;
-       // std::cout << "UpdateForcesAndTorques not implemented!";
-        // Do we set the velocity of the Motor to the PWM signal as mock speed 
-        // And then here in the plugin convert this given PWM signal to a 
 
-        // Wie erhalte ich die States der Dynamixel?
 
-        // Macht es sinn alles in einem Plugin zusammen zu fassen?
+      // Logic to determine the thrust force
+      // Logic to determine the thrust direction
 
-        // Wo lassen wir die Kräfte angreiffen?
-        /*
-        double sim_motor_pwm = duct_joint_->GetVelocity(0); // Get the PWM Value from the duct_joint_ around axis=0; 
-                double sim_dynamixel1_vel = dynamixel1_joint_->GetVelocity(0); // Get the Velocity Value from the first dynamixel around axis=0; // base
-                double sim_dynamixel2_vel = dynamixel2_joint_->GetVelocity(0); // Get the Velocity Value from the second dynamixel around axis=0; // top 
+      // Logic to determine the ramp up time 
+      // Wo lassen wir die Kräfte angreiffen?
 
-        */
-      
+      // Set the Velocity of the Fan... 
+      if(!std::isnan(ref_motor_rot_vel_)){joint_->SetVelocity(0, ref_motor_rot_vel_);}    
     }
 
 

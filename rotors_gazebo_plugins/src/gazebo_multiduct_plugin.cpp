@@ -103,9 +103,6 @@ void GazeboMultiDuctPlugin::OnUpdate(const common::UpdateInfo&) {
   actuator_state_msg.mutable_header()->set_frame_id("");
 
   motor_state_pub_->Publish(actuator_state_msg);
-
-  std::cout << "FirstReference: "<<received_first_reference_<<std::endl;
-
 }
 
 void GazeboMultiDuctPlugin::CreatePubsAndSubs() {
@@ -158,9 +155,6 @@ void GazeboMultiDuctPlugin::CreatePubsAndSubs() {
                                                    command_actuator_sub_topic_);
   connect_ros_to_gazebo_topic_msg.set_msgtype(gz_std_msgs::ConnectRosToGazeboTopic::ACTUATORS);
   gz_connect_ros_to_gazebo_topic_pub->Publish(connect_ros_to_gazebo_topic_msg, true);
-
-std::cout << "CreateSubsAndPubs"<<std::endl; 
-
 }
 
 void GazeboMultiDuctPlugin::CommandMotorCallback(GzActuatorsMsgPtr& actuators_msg) {
