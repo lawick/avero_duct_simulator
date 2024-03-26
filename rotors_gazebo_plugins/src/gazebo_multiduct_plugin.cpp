@@ -69,7 +69,7 @@ void GazeboMultiDuctPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf)
         motor = motor->GetNextElement("servo");
         }
     }
-    std::cout << "Loaded the actuators"<<std::endl; 
+    std::cout << "Loaded "<< motors_.size() << " actuators."<<std::endl; 
     gzdbg << "[gazebo_multimotor_plugin] Loaded " << motors_.size() << " actuators.";
 
     // Listen to the update event. This event is broadcast every
@@ -103,6 +103,9 @@ void GazeboMultiDuctPlugin::OnUpdate(const common::UpdateInfo&) {
   actuator_state_msg.mutable_header()->set_frame_id("");
 
   motor_state_pub_->Publish(actuator_state_msg);
+
+  std::cout << "FirstReference: "<<received_first_reference_<<std::endl;
+
 }
 
 void GazeboMultiDuctPlugin::CreatePubsAndSubs() {
@@ -161,6 +164,9 @@ std::cout << "CreateSubsAndPubs"<<std::endl;
 }
 
 void GazeboMultiDuctPlugin::CommandMotorCallback(GzActuatorsMsgPtr& actuators_msg) {
+
+  std::cout << "Callback Called" <<std::endl;
+
   std::vector<int> num_commands = {actuators_msg->angles_size(),
                                    actuators_msg->angular_velocities_size(),
                                    actuators_msg->normalized_size()};
@@ -175,6 +181,7 @@ void GazeboMultiDuctPlugin::CommandMotorCallback(GzActuatorsMsgPtr& actuators_ms
 
   // Set unfilled commands to nan, for motors to handle independently.
   for (int i = 0; i < motors_.size(); ++i) {
+    std::cout << actuators_msg->angles(i) <<std::endl; 
     motors_.at(i)->SetActuatorReference(
         i < num_commands.at(0) ? actuators_msg->angles(i)
                                : std::numeric_limits<double>::quiet_NaN(),

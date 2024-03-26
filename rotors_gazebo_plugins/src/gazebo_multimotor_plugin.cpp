@@ -162,6 +162,7 @@ void GazeboMultimotorPlugin::CommandMotorCallback(GzActuatorsMsgPtr& actuators_m
 
   // Set unfilled commands to nan, for motors to handle independently.
   for (int i = 0; i < motors_.size(); ++i) {
+    std::cout << actuators_msg->angles(i) <<std::endl; 
     motors_.at(i)->SetActuatorReference(
         i < num_commands.at(0) ? actuators_msg->angles(i)
                                : std::numeric_limits<double>::quiet_NaN(),

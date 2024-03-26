@@ -24,6 +24,7 @@ class MotorModelDuct : public MotorModel{
             min_rot_velocity_(kDefaultMinRotVelocity),
             thrust_constant_(kDefaultThrustConstant),
             moment_constant_(kDefaultMomentConstant),
+// Was brauchen wir von diesen Konstanten?
             // motor_torque_constant0_(kDefaultMotorTorqueConst0),
             // motor_torque_constant1_(kDefaultMotorTorqueConst1),
             // motor_torque_constant2_(kDefaultMotorTorqueConst2),
