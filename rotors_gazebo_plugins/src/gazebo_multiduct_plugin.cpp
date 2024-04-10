@@ -1,81 +1,85 @@
-#include "rotors_gazebo_plugins/gazebo_multimotor_plugin.h"
+#include "rotors_gazebo_plugins/gazebo_multiduct_plugin.h"
 
-namespace gazebo {
+namespace gazebo{
 
-void GazeboMultimotorPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf) {
-  // Store the pointer to the model.
-  model_ = _model;
-  world_ = model_->GetWorld();
-  namespace_.clear();
+void GazeboMultiDuctPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf){
+    std::cout << std::endl;
+    std::cout << "Moin aus der Zentrale"<< std::endl; 
+    std::cout << std::endl;
+    model_ =_model; 
+    world_ = model_->GetWorld(); 
+    
+    //==============================================//
+    //========== READ IN PARAMS FROM SDF ===========//
+    //==============================================//
 
-  //==============================================//
-  //========== READ IN PARAMS FROM SDF ===========//
-  //==============================================//
-
-  if (_sdf->HasElement("robotNamespace")) {
-    namespace_ = _sdf->GetElement("robotNamespace")->Get<std::string>();
-  } else {
-    gzerr << "[multimotor_plugin] Please specify a robotNamespace.\n";
-  }
-
-  node_handle_ = gazebo::transport::NodePtr(new transport::Node());
-
-  // Initialise with default namespace (typically /gazebo/default/)
-  node_handle_->Init();
-
-  getSdfParam<std::string>(_sdf, "actuatorCommandSubTopic", command_actuator_sub_topic_,
-                           command_actuator_sub_topic_);
-  getSdfParam<std::string>(_sdf, "actuatorStatePubTopic", motor_state_pub_topic_,
-                           motor_state_pub_topic_);
-
-  //=============================================//
-  //========== LOAD ROTORS AND SERVOS ===========//
-  //==============================================//
-  std::string joint_name, link_name;
-
-  // Add rotors.
-  if (_sdf->HasElement("rotors")) {
-    sdf::ElementPtr motors = _sdf->GetElement("rotors");
-    sdf::ElementPtr motor = motors->GetElement("rotor");
-
-    while (motor) {
-      // Only load valid motors
-      if (IsValidLink(motor) & IsValidJoint(motor)) {
-        motors_.push_back(std::make_unique<MotorModelRotor>(model_, motor));
-        gzdbg << "[gazebo_multimotor_plugin] Loaded rotor!\n";
-      } else {
-        gzdbg << "[gazebo_multimotor_plugin] Failed to load rotor!\n";
-      }
-      motor = motor->GetNextElement("rotor");
+    if (_sdf->HasElement("robotNamespace")) {
+        namespace_ = _sdf->GetElement("robotNamespace")->Get<std::string>();
+        std::cout << "Name Space: " << namespace_ << std::endl;
+    } else {
+        std::cout << "No NameSpace!!!" << std::endl; 
+        gzerr << "[multimotor_plugin] Please specify a robotNamespace.\n";
     }
-  }
 
-  // Add servos.
-  if (_sdf->HasElement("servos")) {
-    sdf::ElementPtr motors = _sdf->GetElement("servos");
-    sdf::ElementPtr motor = motors->GetElement("servo");
+    node_handle_ = gazebo::transport::NodePtr(new transport::Node());
 
-    while (motor) {
-      // Only load valid motors
-      if (IsValidJoint(motor)) {
-        motors_.push_back(std::make_unique<MotorModelServo>(model_, motor));
-        gzdbg << "[gazebo_multimotor_plugin] Loaded servo!\n";
-      } else {
-        gzdbg << "[gazebo_multimotor_plugin] Failed to load servo!\n";
-      }
-      motor = motor->GetNextElement("servo");
+    // Initialise with default namespace (typically /gazebo/default/)
+    node_handle_->Init();
+
+    getSdfParam<std::string>(_sdf, "actuatorCommandSubTopic", command_actuator_sub_topic_,command_actuator_sub_topic_);
+    getSdfParam<std::string>(_sdf, "actuatorStatePubTopic", motor_state_pub_topic_,motor_state_pub_topic_);
+
+
+    //=============================================//
+    //========== LOAD ROTORS AND SERVOS ===========//
+    //==============================================//
+    std::string joint_name, link_name;
+
+    // Add ducts.
+    if (_sdf->HasElement("ducts")) {
+        sdf::ElementPtr motors = _sdf->GetElement("ducts");
+        sdf::ElementPtr motor = motors->GetElement("duct");
+
+        while (motor) {
+        // Only load valid motors
+        if (IsValidLink(motor) & IsValidJoint(motor)) {
+            motors_.push_back(std::make_unique<MotorModelDuct>(model_, motor)); // Erstelle einen Ptr auf ein neues MotorModelDuct !!! 
+    //Change to MotorModelduct
+            gzdbg << "[gazebo_multimotor_plugin] Loaded duct!\n";
+        } else {
+            gzdbg << "[gazebo_multimotor_plugin] Failed to load duct!\n";
+        }
+        motor = motor->GetNextElement("duct");
+        }
     }
-  }
-  gzdbg << "[gazebo_multimotor_plugin] Loaded " << motors_.size() << " actuators.";
 
-  // Listen to the update event. This event is broadcast every
-  // simulation iteration.
-  updateConnection_ = event::Events::ConnectWorldUpdateBegin(
-      boost::bind(&GazeboMultimotorPlugin::OnUpdate, this, _1));
+    // Add servos.
+    if (_sdf->HasElement("servos")) {
+        sdf::ElementPtr motors = _sdf->GetElement("servos");
+        sdf::ElementPtr motor = motors->GetElement("servo");
+
+        while (motor) {
+        // Only load valid motors
+        if (IsValidJoint(motor)) {
+            motors_.push_back(std::make_unique<MotorModelServo>(model_, motor));
+            gzdbg << "[gazebo_multimotor_plugin] Loaded servo!\n";
+        } else {
+            gzdbg << "[gazebo_multimotor_plugin] Failed to load servo!\n";
+        }
+        motor = motor->GetNextElement("servo");
+        }
+    }
+    std::cout << "Loaded "<< motors_.size() << " actuators."<<std::endl; 
+    gzdbg << "[gazebo_multimotor_plugin] Loaded " << motors_.size() << " actuators.";
+
+    // Listen to the update event. This event is broadcast every
+    // simulation iteration.
+    updateConnection_ = event::Events::ConnectWorldUpdateBegin(boost::bind(&GazeboMultiDuctPlugin::OnUpdate, this, _1));
 }
 
-void GazeboMultimotorPlugin::OnUpdate(const common::UpdateInfo&) {
+void GazeboMultiDuctPlugin::OnUpdate(const common::UpdateInfo&) {
   if (!pubs_and_subs_created_) {
+    std::cout << "CreateSubsAndPubs"<<std::endl; 
     CreatePubsAndSubs();
     pubs_and_subs_created_ = true;
   }
@@ -101,7 +105,7 @@ void GazeboMultimotorPlugin::OnUpdate(const common::UpdateInfo&) {
   motor_state_pub_->Publish(actuator_state_msg);
 }
 
-void GazeboMultimotorPlugin::CreatePubsAndSubs() {
+void GazeboMultiDuctPlugin::CreatePubsAndSubs() {
   // Create temporary "ConnectGazeboToRosTopic" publisher and message
   gazebo::transport::PublisherPtr gz_connect_gazebo_to_ros_topic_pub =
       node_handle_->Advertise<gz_std_msgs::ConnectGazeboToRosTopic>(
@@ -117,6 +121,8 @@ void GazeboMultimotorPlugin::CreatePubsAndSubs() {
   // ============================================================ //
 
   gzdbg << "GazeboMultimotorPlugin creating Gazebo publisher on \""
+        << namespace_ + "/" + motor_state_pub_topic_ << "\"." << std::endl;
+  std::cout << "GazeboMultimotorPlugin creating Gazebo publisher on \""
         << namespace_ + "/" + motor_state_pub_topic_ << "\"." << std::endl;
   motor_state_pub_ = node_handle_->Advertise<gz_sensor_msgs::Actuators>(
       namespace_ + "/" + motor_state_pub_topic_, 1);
@@ -134,8 +140,12 @@ void GazeboMultimotorPlugin::CreatePubsAndSubs() {
   //
   gzdbg << "Subscribing to Gazebo topic \""
         << "~/" + namespace_ + "/" + command_actuator_sub_topic_ << "\"." << std::endl;
+
+  std::cout << "Subscribing to Gazebo topic \""
+        << "~/" + namespace_ + "/" + command_actuator_sub_topic_ << "\"." << std::endl;
+
   cmd_motor_sub_ = node_handle_->Subscribe("~/" + namespace_ + "/" + command_actuator_sub_topic_,
-                                           &GazeboMultimotorPlugin::CommandMotorCallback, this);
+                                           &GazeboMultiDuctPlugin::CommandMotorCallback, this);
 
   // Connect to ROS
   gz_std_msgs::ConnectRosToGazeboTopic connect_ros_to_gazebo_topic_msg;
@@ -147,7 +157,10 @@ void GazeboMultimotorPlugin::CreatePubsAndSubs() {
   gz_connect_ros_to_gazebo_topic_pub->Publish(connect_ros_to_gazebo_topic_msg, true);
 }
 
-void GazeboMultimotorPlugin::CommandMotorCallback(GzActuatorsMsgPtr& actuators_msg) {
+void GazeboMultiDuctPlugin::CommandMotorCallback(GzActuatorsMsgPtr& actuators_msg) {
+
+  std::cout << "Callback Called" <<std::endl;
+
   std::vector<int> num_commands = {actuators_msg->angles_size(),
                                    actuators_msg->angular_velocities_size(),
                                    actuators_msg->normalized_size()};
@@ -175,7 +188,7 @@ void GazeboMultimotorPlugin::CommandMotorCallback(GzActuatorsMsgPtr& actuators_m
   received_first_reference_ = true;
 }
 
-bool GazeboMultimotorPlugin::IsValidLink(const sdf::ElementPtr motor) {
+bool GazeboMultiDuctPlugin::IsValidLink(const sdf::ElementPtr motor) {
   // Check that link name is valid!
   std::string link_name;
 
@@ -194,7 +207,7 @@ bool GazeboMultimotorPlugin::IsValidLink(const sdf::ElementPtr motor) {
   return true;
 }
 
-bool GazeboMultimotorPlugin::IsValidJoint(const sdf::ElementPtr motor) {
+bool GazeboMultiDuctPlugin::IsValidJoint(const sdf::ElementPtr motor) {
   // Check that joint name is valid!
   std::string joint_name;
   if (motor->HasElement("jointName")) {
@@ -213,6 +226,6 @@ bool GazeboMultimotorPlugin::IsValidJoint(const sdf::ElementPtr motor) {
   return true;
 }
 
-GZ_REGISTER_MODEL_PLUGIN(GazeboMultimotorPlugin);
+GZ_REGISTER_MODEL_PLUGIN(GazeboMultiDuctPlugin);
 
-}  // namespace gazebo
+}

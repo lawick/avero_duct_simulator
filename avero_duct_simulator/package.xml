@@ -1,5 +1,5 @@
 <package format="2">
-  <name>rotors_simulator</name>
+  <name>avero_duct_simulator</name>
   <version>2.2.3</version>
   <description>RotorS is a MAV gazebo simulator.</description>
 
