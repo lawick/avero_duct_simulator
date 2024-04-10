@@ -119,7 +119,6 @@ class MotorModelServo : public MotorModel {
       switch (mode_) {
         case (ControlMode::kPosition): {
           joint_controller_->SetPositionPID(joint_->GetScopedName(), pid_);
-          //joint_controller_ -> SetJointPosition(joint_, 0.0);
           break;
         }
         case (ControlMode::kVelocity): {
@@ -165,9 +164,8 @@ class MotorModelServo : public MotorModel {
     switch (mode_) {
       case (ControlMode::kPosition): {
         if (!std::isnan(ref_motor_rot_pos_)) {
-          // joint_controller_->SetPositionTarget(joint_->GetScopedName(),
-          //                                      turning_direction_ * ref_motor_rot_pos_);
-          joint_controller_->SetJointPosition(joint_ ->GetScopedName(), turning_direction_ * ref_motor_rot_pos_);
+          joint_controller_->SetPositionTarget(joint_->GetScopedName(),
+                                               turning_direction_ * ref_motor_rot_pos_);
           joint_controller_->Update();
         }
         break;
