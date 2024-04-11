@@ -167,8 +167,10 @@ class MotorModelServo : public MotorModel {
         if (!std::isnan(ref_motor_rot_pos_)) {
           // joint_controller_->SetPositionTarget(joint_->GetScopedName(),
           //                                      turning_direction_ * ref_motor_rot_pos_);
-          joint_controller_->SetJointPosition(joint_ ->GetScopedName(), turning_direction_ * ref_motor_rot_pos_);
-          joint_controller_->Update();
+          //joint_controller_->SetJointPosition(joint_ ->GetScopedName(), turning_direction_ * ref_motor_rot_pos_);
+          joint_->SetPosition(0, turning_direction_ * ref_motor_rot_pos_);
+
+          //joint_controller_->Update();
         }
         break;
       }
