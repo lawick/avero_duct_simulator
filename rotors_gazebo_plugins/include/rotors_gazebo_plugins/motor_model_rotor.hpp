@@ -150,43 +150,43 @@ class MotorModelRotor : public MotorModel {
     // ROS_INFO("thrust: %f", thrust);
     
 
-    // // Compute motor effort related to thrust force. It may be better to relate
-    // // this to drag torque as computed below. Collect experimental data to
-    // // determine.
-    // motor_rot_effort_ = motor_torque_constant0_ + motor_torque_constant1_ * std::abs(thrust) +
-    //                     motor_torque_constant2_ * thrust * thrust;
+    // Compute motor effort related to thrust force. It may be better to relate
+    // this to drag torque as computed below. Collect experimental data to
+    // determine.
+    motor_rot_effort_ = motor_torque_constant0_ + motor_torque_constant1_ * std::abs(thrust) +
+                        motor_torque_constant2_ * thrust * thrust;
 
-    // // Forces from Philppe Martin's and Erwan Salaün's
-    // // 2010 IEEE Conference on Robotics and Automation paper
-    // // The True Role of Accelerometer Feedback in Quadrotor Control
-    // // - \omega * \lambda_1 * V_A^{\perp}
-    // ignition::math::Vector3d joint_axis = joint_->GlobalAxis(0);
-    // ignition::math::Vector3d body_velocity_W = link_->WorldLinearVel();
-    // ignition::math::Vector3d body_velocity_perpendicular =
-    //     body_velocity_W - (body_velocity_W.Dot(joint_axis) * joint_axis);
-    // ignition::math::Vector3d air_drag =
-    //     -std::abs(motor_rot_vel_) * rotor_drag_coefficient_ * body_velocity_perpendicular;
+    // Forces from Philppe Martin's and Erwan Salaün's
+    // 2010 IEEE Conference on Robotics and Automation paper
+    // The True Role of Accelerometer Feedback in Quadrotor Control
+    // - \omega * \lambda_1 * V_A^{\perp}
+    ignition::math::Vector3d joint_axis = joint_->GlobalAxis(0);
+    ignition::math::Vector3d body_velocity_W = link_->WorldLinearVel();
+    ignition::math::Vector3d body_velocity_perpendicular =
+        body_velocity_W - (body_velocity_W.Dot(joint_axis) * joint_axis);
+    ignition::math::Vector3d air_drag =
+        -std::abs(motor_rot_vel_) * rotor_drag_coefficient_ * body_velocity_perpendicular;
 
-    // // Apply air_drag to link.
+    // Apply air_drag to link.
     // link_->AddForce(air_drag);
-    // // Moments get the parent link, such that the resulting torques can be
-    // // applied.
-    // physics::Link_V parent_links = link_->GetParentJointsLinks();
-    // // The tansformation from the parent_link to the link_.
-    // ignition::math::Pose3d pose_difference =
-    //     link_->WorldCoGPose() - parent_links.at(0)->WorldCoGPose();
-    // ignition::math::Vector3d drag_torque(0, 0, -turning_direction_ * thrust * moment_constant_);
+    // Moments get the parent link, such that the resulting torques can be
+    // applied.
+    physics::Link_V parent_links = link_->GetParentJointsLinks();
+    // The tansformation from the parent_link to the link_.
+    ignition::math::Pose3d pose_difference =
+        link_->WorldCoGPose() - parent_links.at(0)->WorldCoGPose();
+    ignition::math::Vector3d drag_torque(0, 0, -turning_direction_ * thrust * moment_constant_);
 
-    // // Transforming the drag torque into the parent frame to handle
-    // // arbitrary rotor orientations.
-    // ignition::math::Vector3d drag_torque_parent_frame =
-    //     pose_difference.Rot().RotateVector(drag_torque);
+    // Transforming the drag torque into the parent frame to handle
+    // arbitrary rotor orientations.
+    ignition::math::Vector3d drag_torque_parent_frame =
+        pose_difference.Rot().RotateVector(drag_torque);
     // parent_links.at(0)->AddRelativeTorque(drag_torque_parent_frame);
 
-    // ignition::math::Vector3d rolling_moment;
-    // // - \omega * \mu_1 * V_A^{\perp}
-    // rolling_moment =
-    //     -std::abs(motor_rot_vel_) * rolling_moment_coefficient_ * body_velocity_perpendicular;
+    ignition::math::Vector3d rolling_moment;
+    // - \omega * \mu_1 * V_A^{\perp}
+    rolling_moment =
+        -std::abs(motor_rot_vel_) * rolling_moment_coefficient_ * body_velocity_perpendicular;
     // parent_links.at(0)->AddTorque(rolling_moment);
 
     // Apply the filter on the motor's velocity.
