@@ -25,6 +25,7 @@
 #include <Eigen/Core>
 #include <boost/bind.hpp>
 #include <gazebo/physics/physics.hh>
+#include <ros/ros.h>
 
 // USER
 #include "rotors_gazebo_plugins/common.h"
@@ -126,6 +127,9 @@ class MotorModelRotor : public MotorModel {
   void Publish() {}  // No publishing here
 
   void UpdateForcesAndMoments() {
+    //now the force that gets applied at the rotor is not dependend on the meassured rotor velocity of the Link but from the commanded "ref_motor_rot_vel_"
+    //also I uncommented the drag Torque and the rolling moment because we have no measurements for these, so the detail in the Simulation would be nonsense
+
     double sim_motor_rot_vel = joint_->GetVelocity(0);
     if (sim_motor_rot_vel / (2 * M_PI) > 1 / (2 * sampling_time_)) {
       gzerr << "[motor_model_rotor] Aliasing on motor might occur. Consider "
@@ -135,52 +139,55 @@ class MotorModelRotor : public MotorModel {
     double real_motor_rot_velocity = sim_motor_rot_vel * rotor_velocity_slowdown_sim_;
     motor_rot_vel_ = turning_direction_ * real_motor_rot_velocity;
     // Get the direction of the rotor rotation.
-    int real_motor_velocity_sign = (real_motor_rot_velocity > 0) - (real_motor_rot_velocity < 0);
+    int motor_velocity_sign = (ref_motor_rot_vel_ > 0) - (ref_motor_rot_vel_ < 0);
     // Assuming symmetric propellers (or rotors) for the thrust calculation.
-    double thrust = turning_direction_ * real_motor_velocity_sign * real_motor_rot_velocity *
-                    real_motor_rot_velocity * thrust_constant_;
+    double thrust = turning_direction_ * motor_velocity_sign * ref_motor_rot_vel_ *
+                    ref_motor_rot_vel_ * thrust_constant_;
 
     // Apply a force to the link.
     link_->AddRelativeForce(ignition::math::Vector3d(0, 0, thrust));
+    // ROS_INFO("name: %s", link_name_);
+    // ROS_INFO("thrust: %f", thrust);
+    
 
-    // Compute motor effort related to thrust force. It may be better to relate
-    // this to drag torque as computed below. Collect experimental data to
-    // determine.
-    motor_rot_effort_ = motor_torque_constant0_ + motor_torque_constant1_ * std::abs(thrust) +
-                        motor_torque_constant2_ * thrust * thrust;
+    // // Compute motor effort related to thrust force. It may be better to relate
+    // // this to drag torque as computed below. Collect experimental data to
+    // // determine.
+    // motor_rot_effort_ = motor_torque_constant0_ + motor_torque_constant1_ * std::abs(thrust) +
+    //                     motor_torque_constant2_ * thrust * thrust;
 
-    // Forces from Philppe Martin's and Erwan Salaün's
-    // 2010 IEEE Conference on Robotics and Automation paper
-    // The True Role of Accelerometer Feedback in Quadrotor Control
-    // - \omega * \lambda_1 * V_A^{\perp}
-    ignition::math::Vector3d joint_axis = joint_->GlobalAxis(0);
-    ignition::math::Vector3d body_velocity_W = link_->WorldLinearVel();
-    ignition::math::Vector3d body_velocity_perpendicular =
-        body_velocity_W - (body_velocity_W.Dot(joint_axis) * joint_axis);
-    ignition::math::Vector3d air_drag =
-        -std::abs(motor_rot_vel_) * rotor_drag_coefficient_ * body_velocity_perpendicular;
+    // // Forces from Philppe Martin's and Erwan Salaün's
+    // // 2010 IEEE Conference on Robotics and Automation paper
+    // // The True Role of Accelerometer Feedback in Quadrotor Control
+    // // - \omega * \lambda_1 * V_A^{\perp}
+    // ignition::math::Vector3d joint_axis = joint_->GlobalAxis(0);
+    // ignition::math::Vector3d body_velocity_W = link_->WorldLinearVel();
+    // ignition::math::Vector3d body_velocity_perpendicular =
+    //     body_velocity_W - (body_velocity_W.Dot(joint_axis) * joint_axis);
+    // ignition::math::Vector3d air_drag =
+    //     -std::abs(motor_rot_vel_) * rotor_drag_coefficient_ * body_velocity_perpendicular;
 
-    // Apply air_drag to link.
-    link_->AddForce(air_drag);
-    // Moments get the parent link, such that the resulting torques can be
-    // applied.
-    physics::Link_V parent_links = link_->GetParentJointsLinks();
-    // The tansformation from the parent_link to the link_.
-    ignition::math::Pose3d pose_difference =
-        link_->WorldCoGPose() - parent_links.at(0)->WorldCoGPose();
-    ignition::math::Vector3d drag_torque(0, 0, -turning_direction_ * thrust * moment_constant_);
+    // // Apply air_drag to link.
+    // link_->AddForce(air_drag);
+    // // Moments get the parent link, such that the resulting torques can be
+    // // applied.
+    // physics::Link_V parent_links = link_->GetParentJointsLinks();
+    // // The tansformation from the parent_link to the link_.
+    // ignition::math::Pose3d pose_difference =
+    //     link_->WorldCoGPose() - parent_links.at(0)->WorldCoGPose();
+    // ignition::math::Vector3d drag_torque(0, 0, -turning_direction_ * thrust * moment_constant_);
 
-    // Transforming the drag torque into the parent frame to handle
-    // arbitrary rotor orientations.
-    ignition::math::Vector3d drag_torque_parent_frame =
-        pose_difference.Rot().RotateVector(drag_torque);
-    parent_links.at(0)->AddRelativeTorque(drag_torque_parent_frame);
+    // // Transforming the drag torque into the parent frame to handle
+    // // arbitrary rotor orientations.
+    // ignition::math::Vector3d drag_torque_parent_frame =
+    //     pose_difference.Rot().RotateVector(drag_torque);
+    // parent_links.at(0)->AddRelativeTorque(drag_torque_parent_frame);
 
-    ignition::math::Vector3d rolling_moment;
-    // - \omega * \mu_1 * V_A^{\perp}
-    rolling_moment =
-        -std::abs(motor_rot_vel_) * rolling_moment_coefficient_ * body_velocity_perpendicular;
-    parent_links.at(0)->AddTorque(rolling_moment);
+    // ignition::math::Vector3d rolling_moment;
+    // // - \omega * \mu_1 * V_A^{\perp}
+    // rolling_moment =
+    //     -std::abs(motor_rot_vel_) * rolling_moment_coefficient_ * body_velocity_perpendicular;
+    // parent_links.at(0)->AddTorque(rolling_moment);
 
     // Apply the filter on the motor's velocity.
     double ref_motor_rot_vel = 0.0;
